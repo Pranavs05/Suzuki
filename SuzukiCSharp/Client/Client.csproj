@@ -56,8 +56,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AppLogic.cs" />
+    <Compile Include="Helpers\RelayCommand.cs" />
+    <Compile Include="Helpers\Serialization.cs" />
     <Compile Include="Logging\LoggerView.cs" />
+    <Compile Include="Worker\ResourceAccessor.cs" />
     <Compile Include="UpdatableViewBase.cs" />
+    <Compile Include="Worker\ResourceConfig.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

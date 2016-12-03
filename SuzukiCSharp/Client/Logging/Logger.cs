@@ -9,18 +9,18 @@ namespace Client.Logging
 {
 	public struct LoggerMessage
 	{
-		DateTime    timeStamp;
-		string      message;
+		string		timeStamp;
+		string		message;
 
 
 		public LoggerMessage( DateTime time, string log )
 		{
-			timeStamp = time;
+			timeStamp = time.ToString();
 			message = log;
 		}
 
 		// Properties
-		public DateTime TimeStamp
+		public string TimeStamp
 		{
 			get
 			{

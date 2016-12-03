@@ -4,18 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Client.Logging;
+using Client.Worker;
+using System.Windows.Input;
 
 namespace Client
 {
 	public class AppLogic
 	{
-		Logger      mLogger;
-
+		Logger				mLogger;
+		ResourceAccessor	mAccessor;
 
 		public AppLogic()
 		{
 			mLogger = new Logger();
-
+			mAccessor = new ResourceAccessor( mLogger );
 		}
 
 
@@ -32,7 +34,22 @@ namespace Client
 			{
 				mLogger = value;
 			}
-		} 
+		}
+
+		public ResourceAccessor Accessor
+		{
+			get
+			{
+				return mAccessor;
+			}
+
+			set
+			{
+				mAccessor = value;
+			}
+		}
+
+		
 		#endregion
 	}
 }

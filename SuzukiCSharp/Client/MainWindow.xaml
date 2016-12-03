@@ -5,16 +5,39 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450.106" Width="850.177">
-	<StackPanel Orientation="Horizontal">
+        Title="MainWindow" Height="450" Width="850">
+	
+	
+	<StackPanel Orientation="Vertical" >
+		<Menu HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="Auto">
+			<MenuItem Header="Debug" >
+				<MenuItem Header="Save Resource Config" DataContext="{Binding Accessor}" Command="{Binding SaveResourceConfig}"/>
+			</MenuItem>
+		</Menu >
 
-		<ListView DockPanel.Dock="Right" DataContext="{Binding Logger}" ItemsSource="{Binding Logs}" >
-			<ListView.View>
-				<GridView>
-					<GridViewColumn Header="Timestamp" Width="90" DisplayMemberBinding="{Binding Timestamp}" />
-					<GridViewColumn Header="Message" Width="300" DisplayMemberBinding="{Binding Message}" />
-				</GridView>
-			</ListView.View>
-		</ListView>
+		<StackPanel Orientation="Horizontal">
+
+			<StackPanel DataContext="{Binding Accessor}" Orientation="Vertical" >
+				<StackPanel Orientation="Vertical" Margin="20">
+					<Button Width="90" Command="{Binding GetResourceCommand}">Get Resource</Button>
+					<Button Width="90" Command="{Binding SetResourceCommand}">Set Resource</Button>
+				
+				</StackPanel>
+			
+				<StackPanel Orientation="Vertical" Width="300">
+					<TextBlock Text="Last Resource Value:" />
+					<TextBox Width="Auto" Height="100" Text="{Binding Content}" />
+				</StackPanel>
+			</StackPanel>
+			
+			<ListView DataContext="{Binding Logger}" Width="520" Height="400" ItemsSource="{Binding Logs}" >
+				<ListView.View>
+					<GridView>
+						<GridViewColumn Header="Timestamp" Width="120" DisplayMemberBinding="{Binding TimeStamp}" />
+						<GridViewColumn Header="Message" Width="400" DisplayMemberBinding="{Binding Message}" />
+					</GridView>
+				</ListView.View>
+			</ListView>
+		</StackPanel>
 	</StackPanel>
 </Window>
