@@ -30,7 +30,8 @@ namespace Client.Worker
 		public ResourceAccessor( Logging.Logger logger )
 		{
 			mLoggerRef = logger;
-			
+			mContent = "";
+
 			mConfig = Helpers.Serialization.Deserialize< ResourceConfig >( cConfigPath );
 			if( mConfig == null )
 				mConfig = new ResourceConfig();
@@ -42,15 +43,37 @@ namespace Client.Worker
 
 		private void GetResource( object param )
 		{
-			DoWork();
+			HttpGet();
 		}
 
 		private void SetResource( object param )
 		{
-			DoWork();
+			HttpPost();
 		}
 
-		private async void DoWork()
+		private async void HttpPost()
+		{
+			// ... Use HttpClient.
+			using( HttpClient client = new HttpClient() )
+			{
+				client.DefaultRequestHeaders.Accept.Add( new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue( "application/json" ) );
+
+				StringContent content = new StringContent( Content, Encoding.UTF8, "application/json" );
+				HttpResponseMessage response = await client.PostAsync( mConfig.ServerAddress, content );
+
+				try
+				{
+					response.EnsureSuccessStatusCode();
+					mLoggerRef.LogMessage( "Set resource [ " + mConfig.ServerAddress + " ]" );
+				}
+				catch( Exception )
+				{
+					mLoggerRef.LogMessage( "Error while setting resource [ " + mConfig.ServerAddress + " ]. Code: " + response.StatusCode );
+				}
+			}
+		}
+
+		private async void HttpGet()
 		{
 			// ... Target page.
 			string page = mConfig.ServerAddress;
@@ -60,10 +83,19 @@ namespace Client.Worker
 			using( HttpResponseMessage response = await client.GetAsync( page ) )
 			using( HttpContent content = response.Content )
 			{
-				// ... Read the string.
-				Content = await content.ReadAsStringAsync();
+				try
+				{
+					response.EnsureSuccessStatusCode();
 
-				mLoggerRef.LogMessage( "Resource [ " + mConfig.ServerAddress + " ] accessed." );
+					// ... Read the string.
+					Content = await content.ReadAsStringAsync();
+					mLoggerRef.LogMessage( "Get resource from [ " + mConfig.ServerAddress + " ]" );
+				}
+				catch( Exception )
+				{
+					mLoggerRef.LogMessage( "Error while getting resource [ " + mConfig.ServerAddress + " ]. Code: " + response.StatusCode );
+				}
+
 			}
 		}
 
