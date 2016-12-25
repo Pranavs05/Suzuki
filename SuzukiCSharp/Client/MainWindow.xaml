@@ -28,6 +28,10 @@
 					<TextBlock Text="Last Resource Value:" />
 					<TextBox Width="Auto" Height="100" Text="{Binding Content}" />
 				</StackPanel>
+
+				<StackPanel Orientation="Vertical" Width="300">
+					<Button Width="90" Command="{Binding StartSuzukiCommand}">Start Suzuki</Button>
+				</StackPanel>
 			</StackPanel>
 			
 			<ListView DataContext="{Binding Logger}" Width="520" Height="400" ItemsSource="{Binding Logs}" >

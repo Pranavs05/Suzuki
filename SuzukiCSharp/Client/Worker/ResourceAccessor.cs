@@ -16,6 +16,8 @@ namespace Client.Worker
 
 		string              mContent;
 
+		SuzukiLibrary.Suzuki    m_Suzuki;
+
 
 		// Commands
 		Commands.RelayCommand   SaveResourceConfigCommand;
@@ -36,9 +38,12 @@ namespace Client.Worker
 			if( mConfig == null )
 				mConfig = new ResourceConfig();
 
+			m_Suzuki = new SuzukiLibrary.Suzuki();
+
 			SaveResourceConfigCommand = new Commands.RelayCommand( SaveConfig );
 			GetResourceCommand = new Commands.RelayCommand( GetResource );
 			SetResourceCommand = new Commands.RelayCommand( SetResource );
+			StartSuzukiCommand = new Commands.RelayCommand( StartSuzuki );
 		}
 
 		private void GetResource( object param )
@@ -49,6 +54,11 @@ namespace Client.Worker
 		private void SetResource( object param )
 		{
 			HttpPost();
+		}
+
+		private void StartSuzuki( object param )
+		{
+			m_Suzuki.Init();
 		}
 
 		private async void HttpPost()
@@ -117,6 +127,7 @@ namespace Client.Worker
 
 		public ICommand SetResourceCommand { get; set; }
 
+		public ICommand StartSuzukiCommand { get; set; }
 
 		public string Content
 		{
