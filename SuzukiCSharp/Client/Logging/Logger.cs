@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace Client.Logging
 {
@@ -11,7 +12,6 @@ namespace Client.Logging
 	{
 		string		timeStamp;
 		string		message;
-
 
 		public LoggerMessage( DateTime time, string log )
 		{
@@ -41,18 +41,23 @@ namespace Client.Logging
 
 	public class Logger
 	{
-		ObservableCollection< LoggerMessage >      mLogs;
+		ObservableCollection< LoggerMessage >		mLogs;
+		Dispatcher									mDispatcher;
 
 		public Logger()
 		{
 			mLogs = new ObservableCollection< LoggerMessage >();
+			mDispatcher = Dispatcher.CurrentDispatcher;
 		}
 
 
 
 		public void LogMessage( string msg )
 		{
-			mLogs.Add( new LoggerMessage( DateTime.Now, msg ) );
+			mDispatcher.Invoke( () =>
+			{
+				mLogs.Add( new LoggerMessage( DateTime.Now, msg ) );
+			} );
 		}
 
 
