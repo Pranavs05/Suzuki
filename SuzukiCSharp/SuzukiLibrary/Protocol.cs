@@ -78,7 +78,7 @@ namespace SuzukiLibrary
 
 				try
 				{
-					Byte[] data = System.Text.Encoding.ASCII.GetBytes( msg.Msg );
+					Byte[] data = Encoding.ASCII.GetBytes( msg.Msg );
 
 					TcpClient client = new TcpClient( msg.Address, msg.Port );
 

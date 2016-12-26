@@ -24,8 +24,8 @@ namespace SuzukiLibrary
 
 		public Token()
 		{
-			queue = new Queue<UInt32>();
-			lastRequests = new Collection<LastRequest>();
+			queue = new Queue< UInt32 >();
+			lastRequests = new Collection< LastRequest >();
 		}
 
 

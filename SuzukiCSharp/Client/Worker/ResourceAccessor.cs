@@ -48,12 +48,16 @@ namespace Client.Worker
 
 		private void GetResource( object param )
 		{
+			m_Suzuki.AccessResource();
 			HttpGet();
+			m_Suzuki.FreeResource();
 		}
 
 		private void SetResource( object param )
 		{
+			m_Suzuki.AccessResource();
 			HttpPost();
+			m_Suzuki.FreeResource();
 		}
 
 		private void StartSuzuki( object param )
