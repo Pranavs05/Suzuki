@@ -21,6 +21,8 @@ namespace SuzukiLibrary
 		Thread          WaitingThread;
 		ConnectionInfo  Info;
 
+		TcpListener		server = null;
+
 		// Events
 		public event MessageForLogger       LogMessage;
 
@@ -42,10 +44,13 @@ namespace SuzukiLibrary
 		}
 
 
-		public void Init()
+		public void Init( Config.Configuration config )
 		{
 			SenderThread = new Thread( Sender );
 			WaitingThread = new Thread( WaitForConnections );
+
+			Info.Port = config.Port;
+			Info.Address = IPAddress.Parse( config.Address );
 
 			SenderThread.Start();
 			WaitingThread.Start();
@@ -58,8 +63,9 @@ namespace SuzukiLibrary
 			MessageQueue.CompleteAdding();
 			SendQueue.CompleteAdding();
 
-			SenderThread.Join();
-			WaitingThread.Abort();
+			SenderThread?.Join();
+			server.Stop();
+			//WaitingThread?.Abort();
 		}
 
 
@@ -74,10 +80,10 @@ namespace SuzukiLibrary
 		{
 			while( !End )
 			{
-				SuzukiMessage msg = SendQueue.Take();
-
 				try
 				{
+					SuzukiMessage msg = SendQueue.Take();
+
 					Byte[] data = Encoding.ASCII.GetBytes( msg.Msg );
 
 					TcpClient client = new TcpClient( msg.Address, msg.Port );
@@ -92,17 +98,15 @@ namespace SuzukiLibrary
 				{
 					LogMessage( this, e.ToString() );
 				}
-				finally
+				catch( InvalidOperationException )
 				{
-					
+					// SendQueue has ended.
 				}
 			}
 		}
 
 		void WaitForConnections()
-		{
-			TcpListener server = null;
-
+		{		
 			while( !End )
 			{
 				try

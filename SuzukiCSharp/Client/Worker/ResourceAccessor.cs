@@ -66,6 +66,11 @@ namespace Client.Worker
 			m_Suzuki.Init();
 		}
 
+		public void ShutDown()
+		{
+			m_Suzuki.ShutDown();
+		}
+
 		private async void HttpPost()
 		{
 			// ... Use HttpClient.

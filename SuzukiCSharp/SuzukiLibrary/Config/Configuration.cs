@@ -13,6 +13,7 @@ namespace SuzukiLibrary.Config
 	{
 		public UInt32       NodeID;
 		public UInt16       Port;
+		public string       Address;
 
 		public Collection< NodeDescriptor >    Nodes;
 

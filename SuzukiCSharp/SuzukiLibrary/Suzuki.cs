@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,7 +35,11 @@ namespace SuzukiLibrary
 		// Suzuki algorithm
 		Token           m_token;
 		UInt64          m_seqNumber;
+		bool            m_possesedCriticalSection;
 		object          m_seqLock = new object();
+		object          m_tokenLock = new object();
+
+		Dictionary< UInt32, UInt64 >    m_requestNumbers;
 
 		Config.Configuration    m_configuration;
 
@@ -50,6 +55,8 @@ namespace SuzukiLibrary
 
 			m_token = null;
 			m_seqNumber = 0;
+			m_possesedCriticalSection = false;
+			m_requestNumbers = new Dictionary< UInt32, UInt64 >();
 
 			m_configuration = null;
 			ConfigPath = "SuzukiConfig.json";
@@ -60,7 +67,13 @@ namespace SuzukiLibrary
 		{
 			m_configuration = JsonConvert.DeserializeObject< Config.Configuration >( ReadConfig( ConfigPath ) );
 
-			m_protocol.Init();
+			foreach( var node in m_configuration.Nodes )
+			{
+				m_requestNumbers[ node.NodeID ] = 0;
+			}
+
+			CreateToken();	// Temporary
+			m_protocol.Init( m_configuration );
 
 			m_receiver = new Thread( QueryMessage );
 			m_receiver.Start();
@@ -81,7 +94,17 @@ namespace SuzukiLibrary
 
 		public void		AccessResource()
 		{
-			if( m_token == null )
+			bool isToken = false;
+			lock( m_tokenLock )
+			{
+				if( m_token != null )
+				{
+					isToken = true;
+					m_possesedCriticalSection = true;
+				}
+			}
+
+			if( !isToken )
 			{
 				UInt64 seqNumber = IncrementSeqNumber();
 				Messages.Request request = new Messages.Request( m_configuration.NodeID, seqNumber );
@@ -139,7 +162,28 @@ namespace SuzukiLibrary
 
 		private void	RequestMessage( Messages.Request request )
 		{
+			var nodeId = request.senderId;
+			var lastReqId = m_requestNumbers[ nodeId ];
 
+			m_requestNumbers[ nodeId ] = Math.Max( lastReqId, request.value.requestNumber );
+
+			lock( m_tokenLock )
+			{
+				if( m_token != null &&
+					m_possesedCriticalSection == false &&
+					m_requestNumbers[ nodeId ] == m_token.LastRequests[ nodeId ] + 1 )
+				{
+					Messages.TokenMessage token = new Messages.TokenMessage( m_configuration.NodeID, m_token );
+					m_token = null;
+
+					var nodeDesc = FindNode( nodeId );
+					var jsonString = JsonConvert.SerializeObject( token );
+
+					m_protocol.Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
+
+					LogMessage( this, "Sended token to: " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+				}
+			}
 		}
 
 		private void	TokenMessage( Messages.TokenMessage msg )
@@ -157,10 +201,23 @@ namespace SuzukiLibrary
 
 		}
 
-		private Token	CreateToken()
+		private void	CreateToken()
 		{
-			Token token = new Token();
-			return token;
+			// Note: This function creates token. In future use election instead.
+			bool lower = true;
+			foreach( var node in m_configuration.Nodes )
+			{
+				if( node.NodeID < m_configuration.NodeID )
+					lower = false;
+			}
+
+			if( lower )
+			{
+				Token token = new Token();
+				token.LastRequests = m_requestNumbers;
+
+				m_token = token;
+			}
 		}
 
 		#region Sequence number
@@ -182,8 +239,22 @@ namespace SuzukiLibrary
 
 			foreach( var node in m_configuration.Nodes )
 			{
+				// Skip this application node.
+				if( node.NodeID == m_configuration.NodeID )
+					continue;
+
 				m_protocol.Send( jsonString, node.Port, node.NodeIP );
 			}
+		}
+
+		private Config.NodeDescriptor	FindNode( UInt32 nodeId )
+		{
+			foreach( var node in m_configuration.Nodes )
+			{
+				if( node.NodeID == nodeId )
+					return node;
+			}
+			return null;
 		}
 
 	}

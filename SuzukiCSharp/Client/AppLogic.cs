@@ -20,6 +20,10 @@ namespace Client
 			mAccessor = new ResourceAccessor( mLogger );
 		}
 
+		public void ShutDown()
+		{
+			mAccessor.ShutDown();
+		}
 
 		#region Properties
 

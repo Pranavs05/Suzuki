@@ -29,5 +29,10 @@ namespace Client
 			app = new AppLogic();
 			DataContext = app;
 		}
+
+		private void Window_Closing( object sender, System.ComponentModel.CancelEventArgs e )
+		{
+			app.ShutDown();
+		}
 	}
 }
