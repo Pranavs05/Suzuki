@@ -58,6 +58,7 @@ namespace Client.Worker
 
 		private void StartSuzuki( object param )
 		{
+			m_Suzuki.SetLoggerHandler( LogMessage );
 			m_Suzuki.Init();
 		}
 
@@ -112,6 +113,11 @@ namespace Client.Worker
 		private void SaveConfig( object parameter )
 		{
 			Helpers.Serialization.Serialize( cConfigPath, mConfig );
+		}
+
+		private void LogMessage( object sender, string msg )
+		{
+			mLoggerRef.LogMessage( msg );
 		}
 
 		#region MyRegion

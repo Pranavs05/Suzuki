@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections;
-using System.Net;
-using System.Net.Sockets;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using System.IO;
+
+
 
 namespace SuzukiLibrary
 {
@@ -19,16 +19,13 @@ namespace SuzukiLibrary
 
     public class Suzuki
     {
-		public event MessageForLogger		LogMessage;
+		event MessageForLogger		LogMessage;
 
-		BlockingCollection< SuzukiMessage > m_messageQueue;
-		
-		bool                                End;
-
+		Protocol        m_protocol;
+		Thread          m_receiver;
 
 		// Suzuki algorithm
 		Token           m_token;
-		UInt32          m_id;
 		UInt64          m_seqNumber;
 
 		Config.Configuration    m_configuration;
@@ -39,9 +36,8 @@ namespace SuzukiLibrary
 
 		public Suzuki()
 		{
-			End = false;
-			m_messageQueue = new BlockingCollection< SuzukiMessage >();
-
+			m_protocol = new Protocol();
+			m_receiver = null;
 
 			m_token = null;
 			m_seqNumber = 0;
@@ -54,11 +50,27 @@ namespace SuzukiLibrary
 		public void		Init()
 		{
 			m_configuration = JsonConvert.DeserializeObject< Config.Configuration >( ReadConfig( ConfigPath ) );
+
+			m_protocol.Init();
+
+			m_receiver = new Thread( QueryMessage );
+			m_receiver.Start();
 		}
 
 
+		public void		ShutDown()
+		{
+			m_protocol.ShutDown();
+		}
 
-		string		ReadConfig( string filePath )
+		public void		SetLoggerHandler( MessageForLogger handler )
+		{
+			LogMessage += handler;
+			m_protocol.SetLoggerHandler( handler );
+		}
+
+
+		string			ReadConfig( string filePath )
 		{
 			if( File.Exists( filePath ) )
 			{
@@ -67,51 +79,14 @@ namespace SuzukiLibrary
 			return "";
 		}
 
-
-		void		ShutDown()
+		private void	QueryMessage()
 		{
-			End = true;
-			m_messageQueue.CompleteAdding();
+			foreach( var item in m_protocol.MessageQueue.GetConsumingEnumerable() )
+			{
+
+			}
 		}
 
-
-		bool		WaitForConnections		( ConnectionInfo info )
-		{
-			TcpListener server = null;
-
-			try
-			{
-				server = new TcpListener( info.Address, info.Port );
-				server.Start();
-
-				while( End )
-				{
-					TcpClient client = server.AcceptTcpClient();
-					LogMessage( this, "Client accepted: " + client.Client.RemoteEndPoint.ToString() );
-
-					Receiver receiver = new Receiver( client, m_messageQueue );
-					Task receiverTask = new Task( ( obj ) =>
-					{
-						receiver = obj as Receiver;
-						receiver.ProcessClient();
-					}, receiver );
-
-					receiverTask.Start();
-				}
-
-				return true;
-			}
-			catch( SocketException e )
-			{
-				LogMessage( this, e.ToString() );
-
-				return false;
-			}
-			finally
-			{
-				server.Stop();
-			}
-		}
 
     }
 }

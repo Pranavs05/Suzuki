@@ -8,11 +8,21 @@ namespace SuzukiLibrary
 {
 	public class SuzukiMessage
 	{
-		string      Msg;
+		public string      Msg;
+		public UInt16      Port;
+		public string      Address;
+
 
 		public SuzukiMessage( string msg )
 		{
 			Msg = msg;
+		}
+
+		public SuzukiMessage( string msg, UInt16 port, string address )
+		{
+			Msg = msg;
+			Port = port;
+			Address = address;
 		}
 	}
 }
