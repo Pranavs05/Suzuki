@@ -120,10 +120,29 @@ namespace SuzukiLibrary
 
 		public void		FreeResource()
 		{
-			// Send token to other nodes
 			lock ( m_tokenLock )
 			{
 				m_possesedCriticalSection = false;
+
+				var thisNodeId = m_configuration.NodeID;
+				m_token.SetSeqNumber( thisNodeId, m_requestNumbers[ thisNodeId ] );
+
+				// Enqueue other requests.
+				foreach( var node in m_configuration.Nodes )
+				{
+					if( m_requestNumbers[ node.NodeID ] == m_token.GetSeqNumber( node.NodeID ) + 1 &&
+						!m_token.Queue.Contains( node.NodeID ) )
+					{
+						m_token.Queue.Enqueue( node.NodeID );
+					}
+				}
+					
+				// Send to first node from queue.
+				if( m_token.Queue.Count != 0 )
+				{
+					var nextNode = m_token.Queue.Dequeue();
+					SendToken( nextNode );
+				}
 			}
 		}
 
@@ -175,19 +194,17 @@ namespace SuzukiLibrary
 
 			lock( m_tokenLock )
 			{
+				// We can immediatly send token.
 				if( m_token != null &&
 					m_possesedCriticalSection == false &&
-					m_requestNumbers[ nodeId ] == m_token.LastRequests[ nodeId ] + 1 )
+					m_requestNumbers[ nodeId ] == m_token.GetSeqNumber( nodeId ) + 1 )
 				{
-					Messages.TokenMessage token = new Messages.TokenMessage( m_configuration.NodeID, m_token );
-					m_token = null;
-
-					var nodeDesc = FindNode( nodeId );
-					var jsonString = JsonConvert.SerializeObject( token );
-
-					m_protocol.Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
-
-					LogMessage( this, "Token sended to: " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+					SendToken( nodeId );
+				}
+				else
+				{
+					// Note: we don't enqueue node here. This happens while releasing critical section.
+					//m_token.Queue.Enqueue( nodeId );
 				}
 			}
 		}
@@ -201,7 +218,9 @@ namespace SuzukiLibrary
 
 				m_semaphore.Release( 1 );
 
-				LogMessage( this, "Tokend received from: " + msg.senderId );
+				var nodeDesc = m_configuration.FindNode( msg.senderId );
+
+				LogMessage( this, "Tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 			}
 		}
 
@@ -228,10 +247,17 @@ namespace SuzukiLibrary
 			if( lower )
 			{
 				Token token = new Token();
-				token.LastRequests = m_requestNumbers.ToDictionary( entry => entry.Key, entry => entry.Value );
+				foreach( var item in m_requestNumbers )
+				{
+					var lastRequest =  new LastRequest();
+					lastRequest.nodeId = item.Key;
+					lastRequest.number = item.Value;
+
+					token.LastRequests.Add( lastRequest );
+				}
 
 				m_token = token;
-				LogMessage( this, "Got token" );
+				LogMessage( this, "Created token" );
 			}
 		}
 
@@ -262,15 +288,19 @@ namespace SuzukiLibrary
 			}
 		}
 
-		private Config.NodeDescriptor	FindNode( UInt32 nodeId )
+		private void	SendToken( UInt32 nodeId )
 		{
-			foreach( var node in m_configuration.Nodes )
-			{
-				if( node.NodeID == nodeId )
-					return node;
-			}
-			return null;
+			Messages.TokenMessage token = new Messages.TokenMessage( m_configuration.NodeID, m_token );
+			m_token = null;
+
+			var nodeDesc = m_configuration.FindNode( nodeId );
+			var jsonString = JsonConvert.SerializeObject( token );
+
+			m_protocol.Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
+
+			LogMessage( this, "Token sended to node: [ " + nodeDesc.NodeID + " ] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 		}
+
 
 	}
 }

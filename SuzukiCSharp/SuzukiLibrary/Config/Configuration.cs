@@ -27,6 +27,15 @@ namespace SuzukiLibrary.Config
 			Nodes = new Collection<NodeDescriptor>();
 		}
 
+		public NodeDescriptor	FindNode( UInt32 nodeId )
+		{
+			foreach( var node in Nodes )
+			{
+				if( node.NodeID == nodeId )
+					return node;
+			}
+			return null;
+		}
 
 		#endregion
 	}

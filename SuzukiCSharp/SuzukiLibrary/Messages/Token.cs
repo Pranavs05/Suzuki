@@ -9,29 +9,60 @@ using System.Collections.ObjectModel;
 
 namespace SuzukiLibrary
 {
-	//public struct LastRequest
-	//{
-	//	UInt32		nodeId;
-	//	UInt64      number;
-	//}
+	public struct LastRequest
+	{
+		public UInt32      nodeId;
+		public UInt64      number;
+	}
 
 
 	public class Token
 	{
-		Dictionary< UInt32, UInt64 >	lastRequests;
+		Collection< LastRequest >		lastRequests;
 		Queue< UInt32 >					queue;
 
 
 		public Token()
 		{
 			queue = new Queue< UInt32 >();
-			lastRequests = new Dictionary< UInt32, UInt64 >();
+			lastRequests = new Collection< LastRequest >();
 		}
+
+
+		#region HelperFunctions
+
+		public UInt64	GetSeqNumber( UInt32 nodeId )
+		{
+			foreach( var item in lastRequests )
+			{
+				if( item.nodeId == nodeId )
+					return item.number;
+			}
+
+			// Fixme:
+			return 0;
+		}
+
+		public void		SetSeqNumber( UInt32 nodeId, UInt64 seq )
+		{
+			for( int i = 0; i < lastRequests.Count; ++i )
+			{
+				if( lastRequests[ i ].nodeId == nodeId )
+				{
+					var newDesc = new LastRequest();
+					newDesc.number = seq;
+					newDesc.nodeId = nodeId;
+					lastRequests[ i ] = newDesc;
+				}
+			}
+		}
+
+		#endregion
 
 
 		#region Properties
 
-		public Dictionary<UInt32, UInt64> LastRequests
+		public Collection< LastRequest > LastRequests
 		{
 			get
 			{

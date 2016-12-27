@@ -117,7 +117,7 @@ namespace SuzukiLibrary
 					while( !End )
 					{
 						TcpClient client = server.AcceptTcpClient();
-						LogMessage( this, "Client accepted: " + client.Client.RemoteEndPoint.ToString() );
+						//LogMessage( this, "Client accepted: " + client.Client.RemoteEndPoint.ToString() );
 
 						Receiver receiver = new Receiver( client, MessageQueue );
 						Task receiverTask = new Task( ( obj ) =>
