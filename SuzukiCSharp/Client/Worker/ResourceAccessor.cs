@@ -48,16 +48,16 @@ namespace Client.Worker
 
 		private void GetResource( object param )
 		{
-			m_Suzuki.AccessResource();
+			//m_Suzuki.AccessResource();
 			HttpGet();
-			m_Suzuki.FreeResource();
+			//m_Suzuki.FreeResource();
 		}
 
 		private void SetResource( object param )
 		{
-			m_Suzuki.AccessResource();
+			//m_Suzuki.AccessResource();
 			HttpPost();
-			m_Suzuki.FreeResource();
+			//m_Suzuki.FreeResource();
 		}
 
 		private void StartSuzuki( object param )
@@ -73,6 +73,7 @@ namespace Client.Worker
 
 		private async void HttpPost()
 		{
+			m_Suzuki.AccessResource();
 			// ... Use HttpClient.
 			using( HttpClient client = new HttpClient() )
 			{
@@ -90,11 +91,16 @@ namespace Client.Worker
 				{
 					mLoggerRef.LogMessage( "Error while setting resource [ " + mConfig.ServerAddress + " ]. Code: " + response.StatusCode );
 				}
+				finally
+				{
+					m_Suzuki.FreeResource();
+				}
 			}
 		}
 
 		private async void HttpGet()
 		{
+			m_Suzuki.AccessResource();
 			// ... Target page.
 			string page = mConfig.ServerAddress;
 
@@ -114,6 +120,10 @@ namespace Client.Worker
 				catch( Exception )
 				{
 					mLoggerRef.LogMessage( "Error while getting resource [ " + mConfig.ServerAddress + " ]. Code: " + response.StatusCode );
+				}
+				finally
+				{
+					m_Suzuki.FreeResource();
 				}
 
 			}

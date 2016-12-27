@@ -34,9 +34,7 @@ namespace SuzukiLibrary
 
 		// Suzuki algorithm
 		Token           m_token;
-		UInt64          m_seqNumber;
 		bool            m_possesedCriticalSection;
-		object          m_seqLock = new object();
 		object          m_tokenLock = new object();
 
 		Dictionary< UInt32, UInt64 >    m_requestNumbers;
@@ -54,7 +52,6 @@ namespace SuzukiLibrary
 			m_semaphore = new Semaphore( 0, 1 );
 
 			m_token = null;
-			m_seqNumber = 0;
 			m_possesedCriticalSection = false;
 			m_requestNumbers = new Dictionary< UInt32, UInt64 >();
 
@@ -77,7 +74,7 @@ namespace SuzukiLibrary
 			m_receiver = new Thread( QueryMessage );
 			m_receiver.Start();
 
-			LogMessage( this, "Suzuki started" );
+			LogMessage( this, "Suzuki started. Node info: [" + m_configuration.NodeID + "] Port:" + m_configuration.Port );
 
 			CreateToken();  // Temporary
 		}
@@ -116,6 +113,7 @@ namespace SuzukiLibrary
 
 				m_semaphore.WaitOne();
 			}
+			LogMessage( this, "Accessed critical section" );
 		}
 
 		public void		FreeResource()
@@ -123,6 +121,8 @@ namespace SuzukiLibrary
 			lock ( m_tokenLock )
 			{
 				m_possesedCriticalSection = false;
+
+				LogMessage( this, "Released critical section" );
 
 				var thisNodeId = m_configuration.NodeID;
 				m_token.SetSeqNumber( thisNodeId, m_requestNumbers[ thisNodeId ] );
@@ -213,14 +213,13 @@ namespace SuzukiLibrary
 		{
 			lock( m_tokenLock )
 			{
+				var nodeDesc = m_configuration.FindNode( msg.senderId );
+				LogMessage( this, "Tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+
 				m_token = msg.value;
 				m_possesedCriticalSection = true;
 
 				m_semaphore.Release( 1 );
-
-				var nodeDesc = m_configuration.FindNode( msg.senderId );
-
-				LogMessage( this, "Tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 			}
 		}
 
@@ -240,7 +239,7 @@ namespace SuzukiLibrary
 			bool lower = true;
 			foreach( var node in m_configuration.Nodes )
 			{
-				if( node.NodeID < m_configuration.NodeID )
+				if( node.NodeID > m_configuration.NodeID )
 					lower = false;
 			}
 
@@ -264,12 +263,7 @@ namespace SuzukiLibrary
 		#region Sequence number
 		private UInt64	IncrementSeqNumber()
 		{
-			UInt64 result;
-			lock ( m_seqLock )
-			{
-				result = ++m_seqNumber;
-			}
-			return result;
+			return ++m_requestNumbers[ m_configuration.NodeID ];
 		}
 
 		#endregion
@@ -298,7 +292,7 @@ namespace SuzukiLibrary
 
 			m_protocol.Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
 
-			LogMessage( this, "Token sended to node: [ " + nodeDesc.NodeID + " ] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+			LogMessage( this, "Token sended to node: [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 		}
 
 
