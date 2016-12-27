@@ -54,9 +54,12 @@ namespace Client.Logging
 
 		public void LogMessage( string msg )
 		{
-			mDispatcher.Invoke( () =>
+			Task.Run( () =>
 			{
-				mLogs.Add( new LoggerMessage( DateTime.Now, msg ) );
+				mDispatcher.Invoke( () =>
+				{
+					mLogs.Add( new LoggerMessage( DateTime.Now, msg ) );
+				} );
 			} );
 		}
 

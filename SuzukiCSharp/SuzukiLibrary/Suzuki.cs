@@ -72,11 +72,14 @@ namespace SuzukiLibrary
 				m_requestNumbers[ node.NodeID ] = 0;
 			}
 
-			CreateToken();	// Temporary
 			m_protocol.Init( m_configuration );
 
 			m_receiver = new Thread( QueryMessage );
 			m_receiver.Start();
+
+			LogMessage( this, "Suzuki started" );
+
+			CreateToken();  // Temporary
 		}
 
 
@@ -118,7 +121,10 @@ namespace SuzukiLibrary
 		public void		FreeResource()
 		{
 			// Send token to other nodes
-			m_semaphore.Release( 1 );
+			lock ( m_tokenLock )
+			{
+				m_possesedCriticalSection = false;
+			}
 		}
 
 
@@ -181,14 +187,22 @@ namespace SuzukiLibrary
 
 					m_protocol.Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
 
-					LogMessage( this, "Sended token to: " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+					LogMessage( this, "Token sended to: " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 				}
 			}
 		}
 
 		private void	TokenMessage( Messages.TokenMessage msg )
 		{
+			lock( m_tokenLock )
+			{
+				m_token = msg.value;
+				m_possesedCriticalSection = true;
 
+				m_semaphore.Release( 1 );
+
+				LogMessage( this, "Tokend received from: " + msg.senderId );
+			}
 		}
 
 		private void	ElectionBroadcast( Messages.ElectionBroadcast election )
@@ -214,9 +228,10 @@ namespace SuzukiLibrary
 			if( lower )
 			{
 				Token token = new Token();
-				token.LastRequests = m_requestNumbers;
+				token.LastRequests = m_requestNumbers.ToDictionary( entry => entry.Key, entry => entry.Value );
 
 				m_token = token;
+				LogMessage( this, "Got token" );
 			}
 		}
 

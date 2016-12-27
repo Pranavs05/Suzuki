@@ -64,7 +64,7 @@ namespace SuzukiLibrary
 			SendQueue.CompleteAdding();
 
 			SenderThread?.Join();
-			server.Stop();
+			server?.Stop();
 			//WaitingThread?.Abort();
 		}
 
@@ -72,7 +72,7 @@ namespace SuzukiLibrary
 		public void Send( string content, UInt16 port, string address )
 		{
 			SuzukiMessage msg = new SuzukiMessage( content, port, address );
-			m_sendQueue.Add( msg );
+			SendQueue.Add( msg );
 		}
 
 
