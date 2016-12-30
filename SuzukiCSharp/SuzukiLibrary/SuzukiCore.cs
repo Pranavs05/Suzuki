@@ -16,7 +16,7 @@ using Newtonsoft.Json.Linq;
 namespace SuzukiLibrary
 {
 	public delegate void SendBroadcastDelegate( Messages.MessageBase msg );
-	public delegate void SendDelegate( string content, UInt16 port, string address );
+	public delegate void SendDelegate( Messages.MessageBase msg, UInt16 port, string address );
 
 	public class SuzukiCore
 	{
@@ -56,7 +56,7 @@ namespace SuzukiLibrary
 				m_requestNumbers[ node.NodeID ] = 0;
 			}
 
-			CreateToken();  // Temporary
+			//CreateToken();  // Temporary
 		}
 
 
@@ -153,18 +153,18 @@ namespace SuzukiLibrary
 			}
 		}
 
-		private void CreateToken()
+		public void CreateToken()
 		{
-			// Note: This function creates token. In future use election instead.
-			bool lower = true;
-			foreach( var node in m_configuration.Nodes )
-			{
-				if( node.NodeID > m_configuration.NodeID )
-					lower = false;
-			}
+			//// Note: This function creates token. In future use election instead.
+			//bool lower = true;
+			//foreach( var node in m_configuration.Nodes )
+			//{
+			//	if( node.NodeID > m_configuration.NodeID )
+			//		lower = false;
+			//}
 
-			if( lower )
-			{
+			//if( lower )
+			//{
 				Token token = new Token();
 				foreach( var item in m_requestNumbers )
 				{
@@ -177,7 +177,7 @@ namespace SuzukiLibrary
 
 				m_token = token;
 				LogMessage( this, "Created token" );
-			}
+			//}
 		}
 
 		#region Sequence number
@@ -194,9 +194,9 @@ namespace SuzukiLibrary
 			m_token = null;
 
 			var nodeDesc = m_configuration.FindNode( nodeId );
-			var jsonString = JsonConvert.SerializeObject( token );
+			//var jsonString = JsonConvert.SerializeObject( token );
 
-			Send( jsonString, nodeDesc.Port, nodeDesc.NodeIP );
+			Send( token, nodeDesc.Port, nodeDesc.NodeIP );
 
 			LogMessage( this, "Token sended to node: [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 		}

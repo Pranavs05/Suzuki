@@ -44,6 +44,7 @@ namespace Client.Worker
 			GetResourceCommand = new Commands.RelayCommand( GetResource );
 			SetResourceCommand = new Commands.RelayCommand( SetResource );
 			StartSuzukiCommand = new Commands.RelayCommand( StartSuzuki );
+			StartElectionCommand = new Commands.RelayCommand( StartElection );
 		}
 
 		private void GetResource( object param )
@@ -64,6 +65,11 @@ namespace Client.Worker
 		{
 			m_Suzuki.SetLoggerHandler( LogMessage );
 			m_Suzuki.Init();
+		}
+
+		private void StartElection( object param )
+		{
+			m_Suzuki.StartElection();
 		}
 
 		public void ShutDown()
@@ -149,10 +155,9 @@ namespace Client.Worker
 		}
 
 		public ICommand GetResourceCommand { get; set;  }
-
 		public ICommand SetResourceCommand { get; set; }
-
 		public ICommand StartSuzukiCommand { get; set; }
+		public ICommand StartElectionCommand { get; set; }
 
 		public string Content
 		{

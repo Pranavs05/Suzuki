@@ -27,6 +27,7 @@ namespace SuzukiLibrary
 
 		Config.Configuration    m_configuration;
 		SuzukiCore              m_suzuki;
+		Election                m_election;
 
 		// Suzuki Helpers
 		string			ConfigPath { get; set; }
@@ -36,6 +37,7 @@ namespace SuzukiLibrary
 		{
 			m_protocol = new Protocol();
 			m_suzuki = new SuzukiCore();
+			m_election = new Election();
 			m_receiver = null;
 
 			m_configuration = null;
@@ -50,8 +52,13 @@ namespace SuzukiLibrary
 			m_protocol.Init( m_configuration );
 
 			m_suzuki.Init( m_configuration );
-			m_suzuki.Send = m_protocol.Send;
+			m_suzuki.Send = Send;
 			m_suzuki.SendBroadcast = SendBroadcast;
+
+			m_election.Init( m_configuration );
+			m_election.Send = Send;
+			m_election.SendBroadcast = SendBroadcast;
+			m_election.WonElection = ElectionEnded;
 
 			m_receiver = new Thread( QueryMessage );
 			m_receiver.Start();
@@ -65,7 +72,11 @@ namespace SuzukiLibrary
 			m_protocol.ShutDown();
 		}
 
-
+		public void		StartElection()
+		{
+			LogMessage( this, "Election started" );
+			m_election.StartElection();
+		}
 
 		public void		AccessResource()
 		{
@@ -97,27 +108,21 @@ namespace SuzukiLibrary
 				else if( type == "electionOK" )
 				{
 					Messages.ElectionOk electionOk = JsonConvert.DeserializeObject< Messages.ElectionOk >( item.Msg );
-					ElectionOk( electionOk );
+					m_election.ElectionOk( electionOk );
 				}
-				else if( type == "elctionBroadcast" )
+				else if( type == "electionBroadcast" )
 				{
 					Messages.ElectionBroadcast electionBroadcast = JsonConvert.DeserializeObject< Messages.ElectionBroadcast >( item.Msg );
-					ElectionBroadcast( electionBroadcast );
+					m_election.ElectionBroadcast( electionBroadcast );
 				}
 			}
 		}
 
-
-		private void	ElectionBroadcast( Messages.ElectionBroadcast election )
+		private void	ElectionEnded()
 		{
-
+			m_suzuki.CreateToken();
+			m_election.Clear();
 		}
-
-		private void	ElectionOk( Messages.ElectionOk ok )
-		{
-
-		}
-
 
 		private void	SendBroadcast( Messages.MessageBase msg )
 		{
@@ -133,12 +138,18 @@ namespace SuzukiLibrary
 			}
 		}
 
+		private void Send( Messages.MessageBase msg, UInt16 port, string address )
+		{
+			var jsonString = JsonConvert.SerializeObject( msg );
+			m_protocol.Send( jsonString, port, address );
+		}
 
 		public void SetLoggerHandler( MessageForLogger handler )
 		{
 			LogMessage += handler;
 			m_protocol.SetLoggerHandler( handler );
 			m_suzuki.SetLoggerHandler( handler );
+			m_election.SetLoggerHandler( handler );
 		}
 
 		string ReadConfig( string filePath )

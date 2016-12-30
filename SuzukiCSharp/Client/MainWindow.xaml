@@ -31,6 +31,7 @@
 
 				<StackPanel Orientation="Vertical" Width="300">
 					<Button Width="90" Command="{Binding StartSuzukiCommand}">Start Suzuki</Button>
+					<Button Width="90" Command="{Binding StartElectionCommand}">Start Election</Button>
 				</StackPanel>
 			</StackPanel>
 			
