@@ -43,28 +43,19 @@ namespace Client.Worker
 			SaveResourceConfigCommand = new Commands.RelayCommand( SaveConfig );
 			GetResourceCommand = new Commands.RelayCommand( GetResource );
 			SetResourceCommand = new Commands.RelayCommand( SetResource );
-			StartSuzukiCommand = new Commands.RelayCommand( StartSuzuki );
 			StartElectionCommand = new Commands.RelayCommand( StartElection );
+
+			m_Suzuki.Init( LogMessage );
 		}
 
 		private void GetResource( object param )
 		{
-			//m_Suzuki.AccessResource();
 			HttpGet();
-			//m_Suzuki.FreeResource();
 		}
 
 		private void SetResource( object param )
 		{
-			//m_Suzuki.AccessResource();
 			HttpPost();
-			//m_Suzuki.FreeResource();
-		}
-
-		private void StartSuzuki( object param )
-		{
-			m_Suzuki.SetLoggerHandler( LogMessage );
-			m_Suzuki.Init();
 		}
 
 		private void StartElection( object param )
@@ -156,7 +147,6 @@ namespace Client.Worker
 
 		public ICommand GetResourceCommand { get; set;  }
 		public ICommand SetResourceCommand { get; set; }
-		public ICommand StartSuzukiCommand { get; set; }
 		public ICommand StartElectionCommand { get; set; }
 
 		public string Content

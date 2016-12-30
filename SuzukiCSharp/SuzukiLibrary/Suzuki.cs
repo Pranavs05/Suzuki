@@ -45,7 +45,7 @@ namespace SuzukiLibrary
 		}
 
 
-		public void		Init()
+		public void		Init( MessageForLogger handler )
 		{
 			m_configuration = JsonConvert.DeserializeObject< Config.Configuration >( ReadConfig( ConfigPath ) );
 
@@ -62,6 +62,8 @@ namespace SuzukiLibrary
 
 			m_receiver = new Thread( QueryMessage );
 			m_receiver.Start();
+
+			SetLoggerHandler( handler );
 
 			LogMessage( this, "Suzuki started. Node info: [" + m_configuration.NodeID + "] Port:" + m_configuration.Port );
 		}
