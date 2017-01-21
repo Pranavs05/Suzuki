@@ -228,6 +228,8 @@ namespace SuzukiLibrary
 
 		public void ElectionEnded()
 		{
+			Init( m_configuration );
+
 			// Resend request if user tried to access critical section before election.
 			// Else do nothing.
 			if( m_waitingForAccess && m_token != null )
