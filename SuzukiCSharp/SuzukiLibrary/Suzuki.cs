@@ -122,12 +122,18 @@ namespace SuzukiLibrary
 					Messages.ElectionBroadcast electionBroadcast = JsonConvert.DeserializeObject< Messages.ElectionBroadcast >( item.Msg );
 					m_election.ElectionBroadcast( electionBroadcast );
 				}
+				else if( type == "electBroadcast" )
+				{
+					Messages.ElectBroadcast electBroadcast = JsonConvert.DeserializeObject< Messages.ElectBroadcast >( item.Msg );
+					m_election.ElectBroadcast( electBroadcast );
+				}
 			}
 		}
 
-		private void	ElectionEnded()
+		private void	ElectionEnded( bool result )
 		{
-			m_suzuki.CreateToken();
+			if( result )
+				m_suzuki.CreateToken();
 			m_election.Clear();
 		}
 

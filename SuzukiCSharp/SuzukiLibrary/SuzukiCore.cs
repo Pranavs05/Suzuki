@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
-
+using System.Timers;
 
 
 namespace SuzukiLibrary
@@ -34,6 +34,7 @@ namespace SuzukiLibrary
 		Dictionary< UInt32, UInt64 >    m_requestNumbers;
 
 		Config.Configuration    m_configuration;
+		System.Timers.Timer		m_tokenReceiveTimeout;
 
 
 		public SuzukiCore()
@@ -45,6 +46,7 @@ namespace SuzukiLibrary
 			m_requestNumbers = new Dictionary<UInt32, UInt64>();
 
 			m_configuration = null;
+			m_tokenReceiveTimeout = null;
 		}
 
 		public void Init( Config.Configuration config )
@@ -56,7 +58,7 @@ namespace SuzukiLibrary
 				m_requestNumbers[ node.NodeID ] = 0;
 			}
 
-			//CreateToken();  // Temporary
+			m_tokenReceiveTimeout = new System.Timers.Timer( config.TokenReceiveTimeout );
 		}
 
 
@@ -78,8 +80,10 @@ namespace SuzukiLibrary
 				Messages.Request request = new Messages.Request( m_configuration.NodeID, seqNumber );
 
 				SendBroadcast( request );
+				m_tokenReceiveTimeout.Start();
 
 				m_semaphore.WaitOne();
+				m_tokenReceiveTimeout.Stop();
 			}
 			LogMessage( this, "Accessed critical section" );
 		}
@@ -155,29 +159,27 @@ namespace SuzukiLibrary
 
 		public void CreateToken()
 		{
-			//// Note: This function creates token. In future use election instead.
-			//bool lower = true;
-			//foreach( var node in m_configuration.Nodes )
-			//{
-			//	if( node.NodeID > m_configuration.NodeID )
-			//		lower = false;
-			//}
+			Token token = new Token();
+			foreach( var item in m_requestNumbers )
+			{
+				var lastRequest =  new LastRequest();
+				lastRequest.nodeId = item.Key;
+				lastRequest.number = item.Value;
 
-			//if( lower )
-			//{
-				Token token = new Token();
-				foreach( var item in m_requestNumbers )
-				{
-					var lastRequest =  new LastRequest();
-					lastRequest.nodeId = item.Key;
-					lastRequest.number = item.Value;
+				token.LastRequests.Add( lastRequest );
+			}
 
-					token.LastRequests.Add( lastRequest );
-				}
+			m_token = token;
+			LogMessage( this, "Created token" );
+		}
 
-				m_token = token;
-				LogMessage( this, "Created token" );
-			//}
+		private void ReceiveTimeout( Object source, ElapsedEventArgs e )
+		{
+			LogMessage( this, "Waiting for token timeout." );
+
+			// Do something. Start election for example.
+
+			m_tokenReceiveTimeout.Stop();
 		}
 
 		#region Sequence number

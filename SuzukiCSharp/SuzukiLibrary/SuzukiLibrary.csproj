@@ -48,6 +48,7 @@
     <Compile Include="Config\NodeDescriptor.cs" />
     <Compile Include="ConnectionInfo.cs" />
     <Compile Include="Election.cs" />
+    <Compile Include="Messages\ElectBroadcast.cs" />
     <Compile Include="Messages\ElectionBroadcast.cs" />
     <Compile Include="Messages\ElectionOk.cs" />
     <Compile Include="Messages\MessageBase.cs" />

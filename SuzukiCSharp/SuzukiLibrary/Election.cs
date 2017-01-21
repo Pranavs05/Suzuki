@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Timers;
-
+using SuzukiLibrary.Messages;
 
 namespace SuzukiLibrary
 {
-	public delegate void WonElection();
+	public delegate void WonElection( bool result );
 
 	public class Election
 	{
@@ -53,10 +53,11 @@ namespace SuzukiLibrary
 				if( m_oks == null )
 				{
 					StartElection();
+					LogMessage( this, "Election broadcast from [" + election.senderId + "]. Broadcasting number." );
 				}
 				else
 				{
-					LogMessage( this, "Two nodes started election at the same time" );
+					LogMessage( this, "Election broadcast from [" + election.senderId + "]. Broadcast already sent." );
 				}
 			}
 			else if( election.senderId > m_configuration.NodeID )
@@ -68,11 +69,11 @@ namespace SuzukiLibrary
 					var senderDesc = m_configuration.FindNode( election.senderId );
 					Send( ok, senderDesc.Port, senderDesc.NodeIP );
 
-					LogMessage( this, "Election started by [" + election.senderId + "]" );
+					LogMessage( this, "Election broadcast from [" + election.senderId + "]. Sending OK." );
 				}
 				else
 				{
-					LogMessage( this, "ElectionOk intentionally not send. Check Menu -> Debug -> No election response" );
+					LogMessage( this, "ElectionOk to: [" + election.senderId + "] intentionally not send. Check Menu -> Debug -> No election response" );
 				}
 
 				// Don't take part in election anymore.
@@ -133,7 +134,8 @@ namespace SuzukiLibrary
 			if( allOk )
 			{
 				m_electionOkTimeout.Stop();
-				WonElection();
+				WonElection( true );
+				SendElectionResult();
 			}
 		}
 
@@ -142,13 +144,27 @@ namespace SuzukiLibrary
 			LogMessage += handler;
 		}
 
+		internal void	ElectBroadcast( ElectBroadcast electBroadcast )
+		{
+			LogMessage( this, "Node [" + electBroadcast.value.electNodeId + "] elected" );
+
+			// Do something
+		}
+
 		public void		ElectionTimeoutElapsed( Object source, ElapsedEventArgs e )
 		{
 			LogMessage( this, "Election timeout elapsed." );
 
-			WonElection();
+			WonElection( true );
+			SendElectionResult();
 
 			m_electionOkTimeout.Stop();
+		}
+
+		private void	SendElectionResult()
+		{
+			Messages.ElectBroadcast elect = new Messages.ElectBroadcast( m_configuration.NodeID );
+			SendBroadcast( elect );
 		}
 	}
 }
