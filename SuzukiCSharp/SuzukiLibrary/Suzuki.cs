@@ -36,7 +36,7 @@ namespace SuzukiLibrary
 
 		// Debug
 		public bool            NoElectionResponse;
-		public bool            NoTokenResend;
+
 
 
 		public Suzuki()
@@ -76,6 +76,12 @@ namespace SuzukiLibrary
 			LogMessage( this, "Suzuki started. Node info: [" + m_configuration.NodeID + "] Port:" + m_configuration.Port );
 		}
 
+		//debug
+		public void KillToken( object param )
+		{
+			m_suzuki.KillToken();
+		}
+
 
 		public void		ShutDown()
 		{
@@ -85,6 +91,7 @@ namespace SuzukiLibrary
 		public void		StartElection()
 		{
 			LogMessage( this, "Election started" );
+			m_elected = false;
 			m_election.StartElection();
 		}
 
@@ -106,7 +113,23 @@ namespace SuzukiLibrary
 				var json = (JObject)JsonConvert.DeserializeObject( item.Msg );
 				var type = json[ "type"].ToString();
 
-				if( m_elected )
+				if( type == "electionOK" )
+				{
+					Messages.ElectionOk electionOk = JsonConvert.DeserializeObject< Messages.ElectionOk >( item.Msg );
+					m_election.ElectionOk( electionOk );
+				}
+				else if( type == "electionBroadcast" )
+				{
+					Messages.ElectionBroadcast electionBroadcast = JsonConvert.DeserializeObject< Messages.ElectionBroadcast >( item.Msg );
+					m_election.ElectionBroadcast( electionBroadcast );
+					m_elected = false;
+				}
+				else if( type == "electBroadcast" )
+				{
+					Messages.ElectBroadcast electBroadcast = JsonConvert.DeserializeObject< Messages.ElectBroadcast >( item.Msg );
+					m_election.ElectBroadcast( electBroadcast );
+				}
+				else if( m_elected )
 				{
 					if( m_elected && type == "request" )
 					{
@@ -118,21 +141,6 @@ namespace SuzukiLibrary
 						Messages.TokenMessage token = JsonConvert.DeserializeObject< Messages.TokenMessage >( item.Msg );
 						m_suzuki.TokenMessage( token );
 					}
-				}
-				else if( type == "electionOK" )
-				{
-					Messages.ElectionOk electionOk = JsonConvert.DeserializeObject< Messages.ElectionOk >( item.Msg );
-					m_election.ElectionOk( electionOk );
-				}
-				else if( type == "electionBroadcast" )
-				{
-					Messages.ElectionBroadcast electionBroadcast = JsonConvert.DeserializeObject< Messages.ElectionBroadcast >( item.Msg );
-					m_election.ElectionBroadcast( electionBroadcast );
-				}
-				else if( type == "electBroadcast" )
-				{
-					Messages.ElectBroadcast electBroadcast = JsonConvert.DeserializeObject< Messages.ElectBroadcast >( item.Msg );
-					m_election.ElectBroadcast( electBroadcast );
 				}
 				else
 				{
@@ -201,19 +209,6 @@ namespace SuzukiLibrary
 			set
 			{
 				m_election.NoElectionResponse = value;
-			}
-		}
-
-		public bool NoTokenResend1
-		{
-			get
-			{
-				return NoTokenResend;
-			}
-
-			set
-			{
-				NoTokenResend = value;
 			}
 		}
 

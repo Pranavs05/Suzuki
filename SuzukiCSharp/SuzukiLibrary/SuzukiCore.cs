@@ -63,6 +63,7 @@ namespace SuzukiLibrary
 			}
 
 			m_tokenReceiveTimeout = new System.Timers.Timer( config.TokenReceiveTimeout );
+			m_tokenReceiveTimeout.Elapsed += ReceiveTimeout;
 		}
 
 
@@ -224,6 +225,17 @@ namespace SuzukiLibrary
 		public void SetLoggerHandler( MessageForLogger handler )
 		{
 			LogMessage += handler;
+		}
+
+		// Debug
+		public void KillToken()
+		{
+			lock( m_tokenLock )
+			{
+				if( m_token != null )
+					LogMessage( this, "Token killed" );
+				m_token = null;
+			}
 		}
 
 		public void ElectionEnded()

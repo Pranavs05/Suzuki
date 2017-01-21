@@ -147,11 +147,10 @@ namespace SuzukiLibrary
 		public void		ElectionTimeoutElapsed( Object source, ElapsedEventArgs e )
 		{
 			LogMessage( this, "Election timeout elapsed." );
+			m_electionOkTimeout.Stop();
 
 			SendElectionResult();
 			WonElection( true );
-
-			m_electionOkTimeout.Stop();
 		}
 
 		internal void ElectBroadcast( ElectBroadcast electBroadcast )

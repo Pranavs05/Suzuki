@@ -44,6 +44,7 @@ namespace Client.Worker
 			GetResourceCommand = new Commands.RelayCommand( GetResource );
 			SetResourceCommand = new Commands.RelayCommand( SetResource );
 			StartElectionCommand = new Commands.RelayCommand( StartElection );
+			KillTokenCommand = new Commands.RelayCommand( m_Suzuki.KillToken );
 
 			m_Suzuki.Init( LogMessage );
 		}
@@ -148,6 +149,8 @@ namespace Client.Worker
 		public ICommand GetResourceCommand { get; set;  }
 		public ICommand SetResourceCommand { get; set; }
 		public ICommand StartElectionCommand { get; set; }
+		public ICommand KillTokenCommand { get; set; }
+
 
 		public string Content
 		{
