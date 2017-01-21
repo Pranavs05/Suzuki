@@ -34,6 +34,8 @@ namespace SuzukiLibrary
 		{
 			m_electionOkTimeout = null;
 			m_configuration = null;
+
+			NoElectionResponse = false;
 		}
 
 		public void Init( Config.Configuration config )
@@ -59,12 +61,14 @@ namespace SuzukiLibrary
 			}
 			else if( election.senderId > m_configuration.NodeID )
 			{
-				if( NoElectionResponse )
+				if( !NoElectionResponse )
 				{
 					Messages.ElectionOk ok = new Messages.ElectionOk( m_configuration.NodeID );
 
 					var senderDesc = m_configuration.FindNode( election.senderId );
 					Send( ok, senderDesc.Port, senderDesc.NodeIP );
+
+					LogMessage( this, "Election started by [" + election.senderId + "]" );
 				}
 				else
 				{
@@ -85,6 +89,8 @@ namespace SuzukiLibrary
 			if( m_oks != null )
 			{
 				m_oks[ ok.senderId ] = true;
+				LogMessage( this, "Election ok message from: [" + ok.senderId + "]" );
+
 				CheckIfWon();
 			}
 			else
