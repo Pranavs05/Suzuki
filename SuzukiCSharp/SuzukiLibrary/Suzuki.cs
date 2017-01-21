@@ -28,6 +28,7 @@ namespace SuzukiLibrary
 		Config.Configuration    m_configuration;
 		SuzukiCore              m_suzuki;
 		Election                m_election;
+		bool                    m_elected;
 
 		// Suzuki Helpers
 		string			ConfigPath { get; set; }
@@ -44,6 +45,7 @@ namespace SuzukiLibrary
 			m_suzuki = new SuzukiCore();
 			m_election = new Election();
 			m_receiver = null;
+			m_elected = false;
 
 			m_configuration = null;
 			ConfigPath = "SuzukiConfig.json";
@@ -59,6 +61,7 @@ namespace SuzukiLibrary
 			m_suzuki.Init( m_configuration );
 			m_suzuki.Send = Send;
 			m_suzuki.SendBroadcast = SendBroadcast;
+			m_suzuki.RestartElection = StartElection;
 
 			m_election.Init( m_configuration );
 			m_election.Send = Send;
@@ -102,15 +105,19 @@ namespace SuzukiLibrary
 			{
 				var json = (JObject)JsonConvert.DeserializeObject( item.Msg );
 				var type = json[ "type"].ToString();
-				if( type == "request" )
+
+				if( m_elected )
 				{
-					Messages.Request request = JsonConvert.DeserializeObject< Messages.Request >( item.Msg );
-					m_suzuki.RequestMessage( request );
-				}
-				else if( type == "token" )
-				{
-					Messages.TokenMessage token = JsonConvert.DeserializeObject< Messages.TokenMessage >( item.Msg );
-					m_suzuki.TokenMessage( token );
+					if( m_elected && type == "request" )
+					{
+						Messages.Request request = JsonConvert.DeserializeObject< Messages.Request >( item.Msg );
+						m_suzuki.RequestMessage( request );
+					}
+					else if( m_elected && type == "token" )
+					{
+						Messages.TokenMessage token = JsonConvert.DeserializeObject< Messages.TokenMessage >( item.Msg );
+						m_suzuki.TokenMessage( token );
+					}
 				}
 				else if( type == "electionOK" )
 				{
@@ -127,6 +134,10 @@ namespace SuzukiLibrary
 					Messages.ElectBroadcast electBroadcast = JsonConvert.DeserializeObject< Messages.ElectBroadcast >( item.Msg );
 					m_election.ElectBroadcast( electBroadcast );
 				}
+				else
+				{
+					LogMessage( this, "Ignored " + type + " Waiting for election." );
+				}
 			}
 		}
 
@@ -134,7 +145,10 @@ namespace SuzukiLibrary
 		{
 			if( result )
 				m_suzuki.CreateToken();
+
 			m_election.Clear();
+			m_elected = true;
+			m_suzuki.ElectionEnded();
 		}
 
 		private void	SendBroadcast( Messages.MessageBase msg )

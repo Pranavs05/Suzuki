@@ -17,18 +17,21 @@ namespace SuzukiLibrary
 {
 	public delegate void SendBroadcastDelegate( Messages.MessageBase msg );
 	public delegate void SendDelegate( Messages.MessageBase msg, UInt16 port, string address );
+	public delegate void RestartElectionDelegate();
 
 	public class SuzukiCore
 	{
 		event MessageForLogger			LogMessage;
 		public SendBroadcastDelegate    SendBroadcast;
 		public SendDelegate             Send;
+		public RestartElectionDelegate	RestartElection;
 
 		Semaphore       m_semaphore;
 
 		// Suzuki algorithm
 		Token           m_token;
 		bool            m_possesedCriticalSection;
+		bool            m_waitingForAccess;
 		object          m_tokenLock = new object();
 
 		Dictionary< UInt32, UInt64 >    m_requestNumbers;
@@ -43,6 +46,7 @@ namespace SuzukiLibrary
 
 			m_token = null;
 			m_possesedCriticalSection = false;
+			m_waitingForAccess = false;
 			m_requestNumbers = new Dictionary<UInt32, UInt64>();
 
 			m_configuration = null;
@@ -76,16 +80,24 @@ namespace SuzukiLibrary
 
 			if( !isToken )
 			{
-				UInt64 seqNumber = IncrementSeqNumber();
-				Messages.Request request = new Messages.Request( m_configuration.NodeID, seqNumber );
+				RequestCriticalSection();
 
-				SendBroadcast( request );
-				m_tokenReceiveTimeout.Start();
-
+				m_waitingForAccess = true;		// Hopefully no synchronization is needed.
 				m_semaphore.WaitOne();
+				m_waitingForAccess = false;
+
 				m_tokenReceiveTimeout.Stop();
 			}
 			LogMessage( this, "Accessed critical section" );
+		}
+
+		private void RequestCriticalSection()
+		{
+			UInt64 seqNumber = IncrementSeqNumber();
+			Messages.Request request = new Messages.Request( m_configuration.NodeID, seqNumber );
+
+			SendBroadcast( request );
+			m_tokenReceiveTimeout.Start();
 		}
 
 		public void FreeResource()
@@ -151,10 +163,14 @@ namespace SuzukiLibrary
 				LogMessage( this, "Tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 
 				m_token = msg.value;
-				m_possesedCriticalSection = true;
-
-				m_semaphore.Release( 1 );
+				ReleaseSemaphore();
 			}
+		}
+
+		private void ReleaseSemaphore()
+		{
+			m_possesedCriticalSection = true;
+			m_semaphore.Release( 1 );
 		}
 
 		public void CreateToken()
@@ -178,6 +194,7 @@ namespace SuzukiLibrary
 			LogMessage( this, "Waiting for token timeout." );
 
 			// Do something. Start election for example.
+			RestartElection();
 
 			m_tokenReceiveTimeout.Stop();
 		}
@@ -207,6 +224,16 @@ namespace SuzukiLibrary
 		public void SetLoggerHandler( MessageForLogger handler )
 		{
 			LogMessage += handler;
+		}
+
+		public void ElectionEnded()
+		{
+			// Resend request if user tried to access critical section before election.
+			// Else do nothing.
+			if( m_waitingForAccess && m_token != null )
+				ReleaseSemaphore();
+			else if( m_waitingForAccess )
+				RequestCriticalSection();
 		}
 	}
 }

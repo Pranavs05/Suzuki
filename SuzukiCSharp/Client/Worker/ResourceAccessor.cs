@@ -70,7 +70,7 @@ namespace Client.Worker
 
 		private async void HttpPost()
 		{
-			m_Suzuki.AccessResource();
+			await Task.Run( () => m_Suzuki.AccessResource() );
 			// ... Use HttpClient.
 			using( HttpClient client = new HttpClient() )
 			{
@@ -97,7 +97,7 @@ namespace Client.Worker
 
 		private async void HttpGet()
 		{
-			m_Suzuki.AccessResource();
+			await Task.Run( () => m_Suzuki.AccessResource() );
 			// ... Target page.
 			string page = mConfig.ServerAddress;
 

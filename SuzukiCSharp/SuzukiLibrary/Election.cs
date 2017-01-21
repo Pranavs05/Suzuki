@@ -134,8 +134,8 @@ namespace SuzukiLibrary
 			if( allOk )
 			{
 				m_electionOkTimeout.Stop();
-				WonElection( true );
 				SendElectionResult();
+				WonElection( true );
 			}
 		}
 
@@ -144,21 +144,21 @@ namespace SuzukiLibrary
 			LogMessage += handler;
 		}
 
-		internal void	ElectBroadcast( ElectBroadcast electBroadcast )
-		{
-			LogMessage( this, "Node [" + electBroadcast.value.electNodeId + "] elected" );
-
-			// Do something
-		}
-
 		public void		ElectionTimeoutElapsed( Object source, ElapsedEventArgs e )
 		{
 			LogMessage( this, "Election timeout elapsed." );
 
-			WonElection( true );
 			SendElectionResult();
+			WonElection( true );
 
 			m_electionOkTimeout.Stop();
+		}
+
+		internal void ElectBroadcast( ElectBroadcast electBroadcast )
+		{
+			LogMessage( this, "Node [" + electBroadcast.value.electNodeId + "] elected" );
+			m_electionOkTimeout.Stop();
+			WonElection( false );
 		}
 
 		private void	SendElectionResult()
