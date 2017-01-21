@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Net.Http;
-
+using SuzukiLibrary;
 
 namespace Client.Worker
 {
@@ -161,6 +161,15 @@ namespace Client.Worker
 				mContent = value;
 				OnPropertyChanged( "Content" );
 			}
+		}
+
+		public Suzuki Suzuki
+		{
+			get
+			{
+				return m_Suzuki;
+			}
+
 		}
 		#endregion
 	}

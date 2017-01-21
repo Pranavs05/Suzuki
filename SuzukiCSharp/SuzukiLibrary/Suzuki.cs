@@ -33,6 +33,11 @@ namespace SuzukiLibrary
 		string			ConfigPath { get; set; }
 
 
+		// Debug
+		public bool            NoElectionResponse;
+		public bool            NoTokenResend;
+
+
 		public Suzuki()
 		{
 			m_protocol = new Protocol();
@@ -162,6 +167,36 @@ namespace SuzukiLibrary
 			}
 			return "";
 		}
+
+
+
+
+		public bool NoElectionResponse1
+		{
+			get
+			{
+				return m_election.NoElectionResponse;
+			}
+
+			set
+			{
+				m_election.NoElectionResponse = value;
+			}
+		}
+
+		public bool NoTokenResend1
+		{
+			get
+			{
+				return NoTokenResend;
+			}
+
+			set
+			{
+				NoTokenResend = value;
+			}
+		}
+
 
 	}
 }

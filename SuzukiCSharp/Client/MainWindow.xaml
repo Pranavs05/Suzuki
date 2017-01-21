@@ -12,6 +12,8 @@
 		<Menu HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="Auto">
 			<MenuItem Header="Debug" >
 				<MenuItem Header="Save Resource Config" DataContext="{Binding Accessor}" Command="{Binding SaveResourceConfig}"/>
+				<MenuItem Header="No election response" DataContext="{Binding Accessor}" IsChecked="{Binding Path=Suzuki.NoElectionResponse}" IsCheckable="True" />
+				<MenuItem Header="Don't send token" DataContext="{Binding Accessor}" IsChecked="{Binding NoTokenResend}" IsCheckable="True"/>
 			</MenuItem>
 		</Menu >
 

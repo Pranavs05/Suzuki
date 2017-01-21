@@ -17,6 +17,10 @@ namespace SuzukiLibrary.Config
 
 		public Collection< NodeDescriptor >    Nodes;
 
+		public double       ElectionOkTimeout;      // T1
+		public double       TokenReceiveTimeout;    // T2
+		public double       TokenSendTimeout;		// T3
+
 		// Resources
 
 

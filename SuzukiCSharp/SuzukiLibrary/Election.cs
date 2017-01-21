@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
-
+using System.Timers;
 
 
 namespace SuzukiLibrary
@@ -23,13 +23,24 @@ namespace SuzukiLibrary
 		Config.Configuration			m_configuration;
 		Dictionary< UInt32, bool >		m_oks;
 
+		Timer                           m_electionOkTimeout;
+
+		// Debug
+		public bool			NoElectionResponse { get; set;	}
+
+
 
 		public Election()
-		{}
+		{
+			m_electionOkTimeout = null;
+			m_configuration = null;
+		}
 
 		public void Init( Config.Configuration config )
 		{
 			m_configuration = config;
+			m_electionOkTimeout = new Timer( m_configuration.ElectionOkTimeout );
+			m_electionOkTimeout.Elapsed += ElectionTimeoutElapsed;
 		}
 
 
@@ -48,10 +59,20 @@ namespace SuzukiLibrary
 			}
 			else if( election.senderId > m_configuration.NodeID )
 			{
-				Messages.ElectionOk ok = new Messages.ElectionOk( m_configuration.NodeID );
+				if( NoElectionResponse )
+				{
+					Messages.ElectionOk ok = new Messages.ElectionOk( m_configuration.NodeID );
 
-				var senderDesc = m_configuration.FindNode( election.senderId );
-				Send( ok, senderDesc.Port, senderDesc.NodeIP );
+					var senderDesc = m_configuration.FindNode( election.senderId );
+					Send( ok, senderDesc.Port, senderDesc.NodeIP );
+				}
+				else
+				{
+					LogMessage( this, "ElectionOk intentionally not send. Check Menu -> Debug -> No election response" );
+				}
+
+				// Don't take part in election anymore.
+				m_electionOkTimeout.Stop();
 			}
 			else
 			{
@@ -84,6 +105,8 @@ namespace SuzukiLibrary
 
 			Messages.ElectionBroadcast msg = new Messages.ElectionBroadcast( m_configuration.NodeID );
 			SendBroadcast( msg );
+
+			m_electionOkTimeout.Start();
 		}
 
 		public void		Clear()
@@ -102,12 +125,24 @@ namespace SuzukiLibrary
 
 			// Notify outside world
 			if( allOk )
+			{
+				m_electionOkTimeout.Stop();
 				WonElection();
+			}
 		}
 
 		public void SetLoggerHandler( MessageForLogger handler )
 		{
 			LogMessage += handler;
+		}
+
+		public void		ElectionTimeoutElapsed( Object source, ElapsedEventArgs e )
+		{
+			LogMessage( this, "Election timeout elapsed." );
+
+			WonElection();
+
+			m_electionOkTimeout.Stop();
 		}
 	}
 }
