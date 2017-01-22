@@ -151,6 +151,8 @@ namespace SuzukiLibrary
 
 		private void	ElectionEnded( bool result )
 		{
+			m_suzuki.Init( m_configuration );
+
 			if( result )
 				m_suzuki.CreateToken();
 
