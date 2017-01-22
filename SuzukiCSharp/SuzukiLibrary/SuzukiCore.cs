@@ -161,6 +161,15 @@ namespace SuzukiLibrary
 			lock ( m_tokenLock )
 			{
 				var nodeDesc = m_configuration.FindNode( msg.senderId );
+
+				if( m_token != null )
+				{
+					LogMessage( this, "Duplicate tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
+					
+					// @todo: Hmmm, consider merging tokens.
+					return;
+				}
+
 				LogMessage( this, "Tokend received from node [" + nodeDesc.NodeID + "] " + nodeDesc.NodeIP + " Port: " + nodeDesc.Port );
 
 				m_token = msg.value;
@@ -186,7 +195,11 @@ namespace SuzukiLibrary
 				token.LastRequests.Add( lastRequest );
 			}
 
-			m_token = token;
+			lock ( m_tokenLock )
+			{
+				m_token = token;
+			}
+
 			LogMessage( this, "Created token" );
 		}
 
@@ -209,8 +222,13 @@ namespace SuzukiLibrary
 
 		private void SendToken( UInt32 nodeId )
 		{
-			Messages.TokenMessage token = new Messages.TokenMessage( m_configuration.NodeID, m_token );
-			m_token = null;
+			Messages.TokenMessage token = null;
+
+			lock ( m_tokenLock )
+			{
+				token = new Messages.TokenMessage( m_configuration.NodeID, m_token );
+				m_token = null;
+			}
 
 			var nodeDesc = m_configuration.FindNode( nodeId );
 			//var jsonString = JsonConvert.SerializeObject( token );
@@ -226,7 +244,6 @@ namespace SuzukiLibrary
 			LogMessage += handler;
 		}
 
-		// Debug
 		public void KillToken()
 		{
 			lock( m_tokenLock )
@@ -234,6 +251,11 @@ namespace SuzukiLibrary
 				if( m_token != null )
 					LogMessage( this, "Token killed" );
 				m_token = null;
+
+				if( m_possesedCriticalSection )
+				{
+					// Problems. What todo? Wait for release ???
+				}
 			}
 		}
 

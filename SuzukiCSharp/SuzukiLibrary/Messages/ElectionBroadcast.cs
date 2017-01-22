@@ -13,7 +13,7 @@ namespace SuzukiLibrary.Messages
 
 	public class ElectionBroadcast : MessageBase
 	{
-		NodeId      value;
+		public NodeId      value;
 
 
 		//

@@ -34,9 +34,6 @@ namespace SuzukiLibrary
 		string			ConfigPath { get; set; }
 
 
-		// Debug
-		public bool            NoElectionResponse;
-
 
 
 		public Suzuki()
@@ -201,7 +198,7 @@ namespace SuzukiLibrary
 
 
 
-		public bool NoElectionResponse1
+		public bool NoElectionResponse
 		{
 			get
 			{
